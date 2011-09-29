@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<config>
+
+    <LocalFile>
+        <Data>D:\Fubon_Filter\Data\Record20</Data>
+        <Log>log</Log>
+		<Record>record</Record>
+    </LocalFile>
+
+	<Http>
+		<Directory>D:/Fubon_Filter/Data/</Directory>
+		<Path>Fubon</Path>
+	</Http>
+	
+    <DataServer>
+        <Remote_IP>192.168.12.2</Remote_IP>
+        <Remote_Port>777</Remote_Port>
+    </DataServer>
+	
+	<BroadCasting>
+        <Port>777</Port>
+		<MaxConnection>100</MaxConnection>    </BroadCasting>
+
+    <Stock>
+		<Exchange>HK</Exchange>
+		<OpenTime>093000</OpenTime>
+		<Close>D:\Entrepreneur\Dropbox2\Dropbox\Stock\CloseHK.txt</Close>
+		<Symbol>D:\Entrepreneur\Dropbox2\Dropbox\Stock\SymbolHK.txt</Symbol>
+    </Stock>
+</config>
