@@ -1,0 +1,15 @@
+#.metadata
+.metadata/
+#Data Folder : Data
+Data/
+#exec Folder
+exec/
+#Java Class Files
+*.class
+#bak Files
+*.bak
+#DB Files
+*.DB
+#Record Files
+record??
+log
