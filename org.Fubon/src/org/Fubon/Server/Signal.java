@@ -16,7 +16,7 @@ public class Signal {
 	public	long	totlavolume;// 8 Bytes
 	public	long	avgvolume;	// 8 Bytes
 	public	String 	message;	// 30 Bytes
-	Signal(String msg)
+	public Signal(String msg)
 	{
 		message=msg;
 	}

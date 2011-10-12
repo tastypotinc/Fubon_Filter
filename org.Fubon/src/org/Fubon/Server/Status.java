@@ -7,12 +7,12 @@ public class Status {
 		Changed=true;
 	  }
 	  
-	synchronized String read() {
+	public synchronized String read() {
 	    Changed=false;
 	    return message;
 	  }
 	
-	synchronized boolean Changed()
+	public synchronized boolean Changed()
 	{
 		return Changed;
 	}

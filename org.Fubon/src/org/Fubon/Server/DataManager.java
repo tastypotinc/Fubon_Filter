@@ -1,25 +1,34 @@
 package org.Fubon.Server;
-import java.io.BufferedReader;
+//import java.io.BufferedReader;
 //import java.io.FileInputStream;
-import java.io.FileInputStream;
+//import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
+//import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 //import java.io.InputStream;
-import java.io.InputStreamReader;
+//import java.io.InputStreamReader;
 //import java.io.InputStream;
 //import java.net.SocketException;
-import java.sql.ResultSet;
+//import java.sql.ResultSet;
 //import java.sql.SQLException;
 import java.util.Calendar;
-import java.util.Date;
+//import java.util.Date;
 import java.util.GregorianCalendar;
 //import java.util.List;
-import java.util.Map;
+//import java.util.Map;
 import java.lang.Thread;
 
+import org.Fubon.Server.Analysis.RuleManager;
+import org.Fubon.Server.DataSource.DataReader;
+import org.Fubon.Server.DataSource.DataSource;
+import org.Fubon.Server.DataSource.FrameParser;
+import org.Fubon.Server.DataSource.STFileReader;
+import org.Fubon.Server.DataSource.STSocketReader;
+import org.Fubon.Server.DataStore.Stock;
+import org.Fubon.Server.DataStore.StockManager;
+//import org.Fubon.Server.Utility.DateConvertor;
 
 
 /**
@@ -27,30 +36,33 @@ import java.lang.Thread;
  * @author Bruno D'Avanzo
  */
  
-class DataManager extends  Thread
+public class DataManager extends  Thread
 {
-	DataReader dr = null;
-    FrameParser	tFP;
+	public DataReader dr = null;
+    DataSource	m_DS;
+    public StockManager m_SM;
+    public RuleManager m_RM;
     final int buffer_size=1024;
-    static String CloseFile;
-    static String SymbolFile;
-    static String RecordFile;
-    static String LogFile;
-    static String Exchange;
-    static String OpenTime;
+
+    public String RecordFile;
+    public String LogFile;
     
 	//static String message="";
-	static Signal_Queue	queue;
+	public Signal_Queue	queue;
 	//static BroadCastingSe	broadcasting_queue;
 	//Current Receiving Status
-	static int	  DataManager_Status=0;  // 0:waiting  1:receiving -1 error
-	static Status currentStatus;
-	static int Reading_Type;   // 0: reading from Socket  1:reading from file
-	static String currentStatusMessage;
-	static int handle_ticks_count=0;
-    DataManager()
+	public int	  DataManager_Status=0;  // 0:waiting  1:receiving -1 error
+	public Status currentStatus;
+	public int Reading_Type;   // 0: reading from Socket  1:reading from file
+	public String currentStatusMessage;
+	public int handle_ticks_count=0;
+    public DataManager()
     {
 		try {
+		    String CloseFile;
+		    String SymbolFile;
+		    String Exchange;
+		    String OpenTime;
 			Calendar cal = new GregorianCalendar();
 			queue=new Signal_Queue();
 			//broadcasting_queue=new BroadCastingSignal_Queue();
@@ -63,8 +75,11 @@ class DataManager extends  Thread
 	    	OpenTime=config.getString("Stock.OpenTime");
 	    	Exchange=config.getString("Stock.Exchange");
 	    	BroadCastingServer.http_directory=config.getString("Http.Directory");
-			tFP=new FrameParser(Exchange);
-			
+			m_DS=new FrameParser(Exchange);
+			m_SM=new StockManager(CloseFile,SymbolFile,Exchange,OpenTime);
+			m_RM=new RuleManager();
+			m_SM.setDataSource(m_DS);
+			m_DS.setStockManager(m_SM);
 		}
 
 		catch (Exception e) {
@@ -73,39 +88,29 @@ class DataManager extends  Thread
 		}
     }
     
-    static String getMarketTradingDate()
+    private boolean checkiffitDefaultMarket()
     {
-    	return FrameParser.MarketTradingDate;
+    	return m_DS.checkiffitDefaultMarket();
+		
     }
     
-    static public void setReadingMethod(int type)
+    public String getMarketTradingDate()
+    {
+    	return m_DS.getMarketTradingDate();
+    }
+    
+    public void setReadingMethod(int type)
     {
     	Reading_Type=type;
     }
     
-    static public void addSignal(Signal tsignal)
+    public void addSignal(Signal tsignal)
     {
     	queue.add(tsignal);
     	BroadCastingServer.add(tsignal);
     }
  
-    public Stock getStockbySymbol(String Symbol)
-    {
-    	//return tFP.getStockbySymbol(Symbol,Exchange);
-    	return FrameParser.stockHashtable.get(Symbol + "." + Exchange);
-    }
-    
-    public Map<Integer, Tick> getStockTickListbySymbol(String Symbol)
-    {
-    	//return tFP.getStockTickListbySymbol(Symbol,Exchange);
-    	return (Map<Integer, Tick>) FrameParser.stockHashtable.get(Symbol + "." + Exchange).ts;
-    }
-    
-    public Map<Date, DayLine> getStockDayLinebySymbol(String Symbol)
-    {
-    	//return tFP.getStockDayLinebySymbol(Symbol,Exchange);
-    	return (Map<Date, DayLine>) FrameParser.stockHashtable.get(Symbol + "." + Exchange).dl;
-    }
+   
     /***
      * Returns the telnet connection input stream.  You should not close the
      * stream when you finish with it.  Rather, you should call
@@ -116,84 +121,16 @@ class DataManager extends  Thread
      ***/
     
     // 清盤
-    public static void CleanMarket()
+    public void CleanMarket()
     {
-    	FrameParser.CleanMarket();
-    	getStockCloseData();
-    	getStockSymbolData();
+    	//將資料清除歸零
+    	m_SM.clear();
+    	m_SM.getStockCloseData();
+    	m_SM.getStockSymbolData();
     	
     }
     
-    private static void getStockCloseData() 
-    {
-    	try {
-	    	String CloseData;
-//	    	String Symbol;
-	    	//byte[] buff = new byte[1024];
-	    	
-	    	//int ret_read = 0;
 
-	    	FileReader CF=new FileReader(CloseFile);
-	    	BufferedReader stockdata = new BufferedReader(CF);
-	    	while((CloseData = stockdata.readLine()) != null)
-	    	{
-	    		//try {
-	    		
-	    			//CloseData = stockdata.readLine();
-					//CloseData = new String(buff, 0,ret_read);
-					FrameParser.CloseParser(CloseData,Exchange,OpenTime);
-					
-				/*} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}*/
-    		}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
-    
-    private static void getStockSymbolData() 
-    {
-    	try {
-	    	String SymbolData;
-////	    	String Symbol;
-//	    	//byte[] buff = new byte[1024];
-//	    	
-//	    	//int ret_read = 0;
-//	    	
-//	    	InputStreamReader CF= new InputStreamReader(new InputStream(SymbolFile),"UTF-16");
-//	    	BufferedReader stockdata = new BufferedReader(CF);
-	    	
-//	    	BufferedReader stockdata = new BufferedReader(new InputStreamReader(new FileInputStream(SymbolFile),
-//	        "UTF-16"));
-	    	BufferedReader stockdata = new BufferedReader(new InputStreamReader(new FileInputStream(SymbolFile),
-	        "UTF-16"));
-	    	while((SymbolData = stockdata.readLine()) != null)
-	    	{
-	    		//try {
-	    		
-	    			//SymbolData = stockdata.readLine();
-					//SymbolData = new String(buff, 0,ret_read);
-					FrameParser.SymbolParser(SymbolData,Exchange,OpenTime);
-					
-				/*} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}*/
-    		}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
     
     public void ParsingData() 
 	{
@@ -340,7 +277,14 @@ class DataManager extends  Thread
 													tFW.write(FrameLength.toString()+" Frame->" + FrameContent+"\n");
 												// Process Data
 												currentStatus.set(FrameContent);
-												tFP.Parser(FrameType, FrameContent, OpenTime);
+												m_DS.Parser( FrameContent);
+												marketOpenChecking();
+												if (checkiffitDefaultMarket())
+												{
+													handle_ticks_count++;
+													m_DS.SavetoDataStore(FrameType);
+												}
+												
 												packet_count++;
 												currentStatusMessage="(處理Tick:"+((Integer)handle_ticks_count).toString()+"收到Tick:"+((Integer)packet_count).toString()+" Errors:"+((Integer)err_packet_count).toString()+")";
 												
@@ -441,7 +385,13 @@ class DataManager extends  Thread
 												tFW.write(FrameLength.toString()+" Frame->" + FrameContent+"\n");
 											// Process Data
 											currentStatus.set(FrameContent);
-											tFP.Parser(FrameType, FrameContent, OpenTime);
+											m_DS.Parser( FrameContent);
+											marketOpenChecking();
+											if (checkiffitDefaultMarket())
+											{
+												handle_ticks_count++;
+												m_DS.SavetoDataStore(FrameType);
+											}
 											packet_count++;
 											currentStatusMessage="(處理Tick:"+((Integer)handle_ticks_count).toString()+"收到Tick:"+((Integer)packet_count).toString()+" Errors:"+((Integer)err_packet_count).toString()+")";
 
@@ -501,6 +451,16 @@ class DataManager extends  Thread
 		}
 
 	}
+    
+    private void marketOpenChecking()
+    {
+    	/* 檢查是否要清盤 */
+    	if (m_DS.checkifMarketOpen())
+		{
+				CleanMarket();
+				m_DS.setMarketTradingDate("");
+		}
+    }
 
 	private static byte charToByte(char c) {
 		return (byte) "0123456789ABCDEF".indexOf(c);
@@ -575,164 +535,29 @@ class DataManager extends  Thread
 	} */
 	public void setRule1(int bm,int bd, int per,boolean f,boolean v)
 	{
-		tFP.setRule1(bm, bd, per,f, v);
+		m_RM.setRule1(bm, bd, per,f, v);
 	}
 	
 	public void setRule2(int bm, int per,boolean v)
 	{
-		tFP.setRule2(bm, per, v);
+		m_RM.setRule2(bm, per, v);
 	}
 	
 	public void setRule3(long rv,boolean v)
 	{
-		tFP.setRule3(rv, v);
+		m_RM.setRule3(rv, v);
 	}
 	
 	public String Dump(String symbol)
 	{
 		Stock tstock;
-		tstock=FrameParser.stockHashtable.get(symbol + "." + Exchange);
-		//tstock=tFP.getStockbySymbol(symbol, Exchange);
+		tstock=m_SM.getStock(symbol);
+		//tstock=m_DS.getStockbySymbol(symbol, Exchange);
 		if (tstock==null) return "沒有這檔股票 ! ";
 		else
 		return tstock.Dump();
 	}
 	
-	void getFileDB2Memory() 
-	{
-		try
-		{
-			// 1. 重新從  Symbol.txt and Close.txt 更新股票基本資料
-			// 2. 從sqlite檔案中更新至記憶體sqlite DB
-			// 3. 將已經發生過的 Tick 重新 Parse 為解決 盤中重新啟動的資料保存
-			// 4. 盤中時refresh tick 會更新 uplimit,downlimit,open,close,high,low 特別是收盤處理所送出的Tick ... 目前還沒implement recovery 機制
-			
-			/* =======The field in ticker==================================== */
-			String ID = "";
-			String TradingDate = "";
-//			String PreClose = "";
-//			String UpLimit = "";
-//			String DownLimit = "";
-//			String PreTotalVolume = "";
-			String Time;
-//			String Settlement;
-			float Price;
-			float Bid;
-			float Ask;
-//			String Open;
-//			String High;
-//			String Low;
-			Long Volume;
-			Long TotalVolume;
-			float BestBid1;
-			float BestBid2;
-			float BestBid3;
-			float BestBid4;
-			float BestBid5;
-			float BestAsk1;
-			float BestAsk2;
-			float BestAsk3;
-			float BestAsk4;
-			float BestAsk5;
-			int BestBidSize1;
-			int BestBidSize2;
-			int BestBidSize3;
-			int BestBidSize4;
-			int BestBidSize5;
-			int BestAskSize1;
-			int BestAskSize2;
-			int BestAskSize3;
-			int BestAskSize4;
-			int BestAskSize5;
-			int TickIndex;
-			String Exch = "";
-			Stock tStock;
-
-			FrameParser.CleanMarket();
-	    	
-	    	//return;
-	    	
-			FrameParser.tickDataStore.openConnectionAndCopyDbInMemory();
-			
-			ResultSet rs=FrameParser.tickDataStore.getDataSet();
-			int New;
-			//int type=0;
-			while (rs.next()) {
-//				tickDataStore.Insert(ID,TradingDate, Time, Price, Bid, Ask, Volume,
-//						TotalVolume, BestBid1, BestBid2, BestBid3, BestBid4,
-//						BestBid5, BestAsk1, BestAsk2, BestAsk3, BestAsk4, BestAsk5,
-//						BestBidSize1, BestBidSize2, BestBidSize3, BestBidSize4,
-//						BestBidSize5, BestAskSize1, BestAskSize2, BestAskSize3,
-//						BestAskSize4, BestAskSize5, TickIndex, Exch,FrameType);
-				New = 0;
-				ID=rs.getString("ID");
-				TradingDate=rs.getString("TradingDate");
-				Time=rs.getString("Time");
-				Price=rs.getFloat("Price");
-				Bid=rs.getFloat("Bid");
-				Ask=rs.getFloat("Ask");
-				Volume=rs.getLong("Volume");
-				TotalVolume=rs.getLong("TotalVolume");
-				BestBid1=rs.getFloat("BestBid1");
-				BestBid2=rs.getFloat("BestBid2");
-				BestBid3=rs.getFloat("BestBid3");
-				BestBid4=rs.getFloat("BestBid4");
-				BestBid5=rs.getFloat("BestBid5");
-				BestAsk1=rs.getFloat("BestAsk1");
-				BestAsk2=rs.getFloat("BestAsk2");
-				BestAsk3=rs.getFloat("BestAsk3");
-				BestAsk4=rs.getFloat("BestAsk4");
-				BestAsk5=rs.getFloat("BestAsk5");
-				BestBidSize1=rs.getInt("BestBidSize1");
-				BestBidSize2=rs.getInt("BestBidSize2");
-				BestBidSize3=rs.getInt("BestBidSize3");
-				BestBidSize4=rs.getInt("BestBidSize4");
-				BestBidSize5=rs.getInt("BestBidSize5");
-				BestAskSize1=rs.getInt("BestAskSize1");
-				BestAskSize2=rs.getInt("BestAskSize2");
-				BestAskSize3=rs.getInt("BestAskSize3");
-				BestAskSize4=rs.getInt("BestAskSize4");
-				BestAskSize5=rs.getInt("BestAskSize5");
-				TickIndex =rs.getInt("TickIndex");
-				Exch=tFP.Exchange;
-				//type=Integer.parseInt(rs.getString("FrameType"));
-				if (!FrameParser.stockHashtable.containsKey(ID + "." + Exch)) {
-					tStock = new Stock(ID, Exch, OpenTime);
-					
-					//((Rule1)tStock.lr.get(0)).reset(rule1_bm, rule1_bd, rule1_per, rule1_filter, rule1_v);
-					//((Rule2)tStock.lr.get(1)).reset(rule2_bm, rule2_per, rule2_v);
-					//((Rule3)tStock.lr.get(2)).reset(rule3_rv,rule3_v);
-					
-					New = 1;
-				} else {
-					tStock = (Stock) FrameParser.stockHashtable.get(ID + "." + Exch);
-				}
-
-
-				tStock.memoryTick(TradingDate, Time, Price, Bid, Ask, Volume,
-							TotalVolume, BestBid1, BestBid2, BestBid3, BestBid4,
-							BestBid5, BestAsk1, BestAsk2, BestAsk3, BestAsk4, BestAsk5,
-							BestBidSize1, BestBidSize2, BestBidSize3, BestBidSize4,
-							BestBidSize5, BestAskSize1, BestAskSize2, BestAskSize3,
-							BestAskSize4, BestAskSize5, TickIndex, Exch);
-					if (New == 1)
-						FrameParser.stockHashtable.put(ID + "." + Exch, tStock);
-					
-
-				}
-
-			
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-			System.err.println("getFileDB2Memory Error:"+e.toString());
-
-		}
-		getStockCloseData();
-    	getStockSymbolData();
-
-	}
 	
 	@Override
 	public void run() 
@@ -747,7 +572,7 @@ class DataManager extends  Thread
               
               try
               {
-            	getFileDB2Memory();  
+            	m_SM.getFileDB2Memory();  
               	ParsingData();
               }
               catch (Exception e)

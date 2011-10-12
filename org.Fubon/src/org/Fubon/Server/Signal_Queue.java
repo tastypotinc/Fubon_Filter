@@ -1,7 +1,7 @@
 package org.Fubon.Server;
 import java.util.Vector;
 // This Signal_Queue Keep all the signal data
-class Signal_Queue {
+public class Signal_Queue {
   
   static private Vector<Signal> queue = new Vector<Signal>();
     
@@ -9,14 +9,14 @@ class Signal_Queue {
       queue.addElement(ts);
   }
   
-  synchronized Signal get(int index) {
+  public synchronized Signal get(int index) {
     
     Signal iobj = queue.elementAt(index);
     
     return iobj;
   }
   
-  synchronized int currentIndex()
+  public synchronized int currentIndex()
   {
 	  return queue.size();
   }

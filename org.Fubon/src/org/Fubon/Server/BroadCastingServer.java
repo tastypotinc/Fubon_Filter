@@ -111,7 +111,7 @@ public class BroadCastingServer extends java.lang.Thread {
   // Listen for incoming connections and handle them
   //private static JSONObject jsonobj;
   private static JSONArray	SignalArray;
-  BroadCastingServer()
+  public BroadCastingServer()
   {
 		try {
 
