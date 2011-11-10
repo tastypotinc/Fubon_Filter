@@ -32,6 +32,7 @@ public class STSocketReader extends SocketClient  implements DataReader
     	remoteip=config.getString("DataServer.Remote_IP");
     	remoteport=Integer.parseInt(config.getString("DataServer.Remote_Port"));
         setDefaultPort(DEFAULT_PORT);
+        forceClose=false;
 		}
 
 		catch (Exception e) {
@@ -73,7 +74,11 @@ public class STSocketReader extends SocketClient  implements DataReader
     	try {
 			super.disconnect();
 			forceClose=true;
+			//super.finalize();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Throwable e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

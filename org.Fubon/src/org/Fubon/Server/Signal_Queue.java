@@ -20,4 +20,9 @@ public class Signal_Queue {
   {
 	  return queue.size();
   }
+  
+  public synchronized void clear()
+  {
+	  queue.clear();
+  }
 }

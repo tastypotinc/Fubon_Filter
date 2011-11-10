@@ -33,6 +33,7 @@ public class STFileReader implements DataReader
     		String  logFile=config.getString("LocalFile.Log");
     	        	_input_=new FileInputStream(testFile);
     	        	_output_=new FileOutputStream(logFile);
+    	    forceClose=false;
         }
         catch (FileNotFoundException e)
         {

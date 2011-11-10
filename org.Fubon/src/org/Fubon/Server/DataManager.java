@@ -94,6 +94,11 @@ public class DataManager extends  Thread
 		
     }
     
+    public void StartGenerateCloseFile(String FilePath)
+    {
+    	m_SM.StartGenerateCloseFile(FilePath);
+    }
+    
     public String getMarketTradingDate()
     {
     	return m_DS.getMarketTradingDate();
@@ -123,11 +128,16 @@ public class DataManager extends  Thread
     // 清盤
     public void CleanMarket()
     {
+    	System.out.println("=======>CleanMarket");
+    	//將memory DB 的資料 Backup到File
+    	m_SM.backupmemoryDB();
     	//將資料清除歸零
     	m_SM.clear();
     	m_SM.getStockCloseData();
     	m_SM.getStockSymbolData();
-    	
+    	//將Signal清除歸零
+    	queue.clear();
+    	// 更新 Close Data Symbol
     }
     
 
@@ -558,6 +568,10 @@ public class DataManager extends  Thread
 		return tstock.Dump();
 	}
 	
+	public void getFileDB2Memoryn() 
+	{
+		m_SM.getFileDB2Memory();  
+	}
 	
 	@Override
 	public void run() 
@@ -572,7 +586,7 @@ public class DataManager extends  Thread
               
               try
               {
-            	m_SM.getFileDB2Memory();  
+            	//m_SM.getFileDB2Memory();  
               	ParsingData();
               }
               catch (Exception e)

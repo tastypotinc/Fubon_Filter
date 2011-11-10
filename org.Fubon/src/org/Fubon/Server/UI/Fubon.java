@@ -86,6 +86,8 @@ public class Fubon {
 	static BroadCastingServer m_BCServer;
 	
 //	private Table StockTick;
+	boolean isgetDBfromFile2Memory=false;
+	
 	private Text textQueryResult;
 	public Text textMoniter;
 	private Table SignalTable;
@@ -223,6 +225,21 @@ public class Fubon {
 		shlZ.setSize(800, 600);
 		shlZ.setText("富邦選股");
 				
+		UI_setTabItem();
+		UI_set_tabItem_working();
+		UI_set_tabItem_config();
+		UI_set_tabItem_stock();
+		
+		shlZ.addListener (SWT.Resize,  new Listener () {
+		    public void handleEvent (Event e) {
+		    	Resize();
+		    }
+		  });
+
+	}
+	
+	void UI_setTabItem()
+	{
 		tabFolder = new TabFolder(shlZ, SWT.NONE);
 		tabFolder.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -244,13 +261,28 @@ public class Fubon {
 		
 		tabItem_stock = new TabItem(tabFolder, SWT.NONE);
 		tabItem_stock.setText("股票查詢");
-		
+	}
 	
+	void UI_set_tabItem_working()
+	{
 		composite_working = formToolkit.createComposite(tabFolder, SWT.NONE);
 		tabItem_working.setControl(composite_working);
 		formToolkit.paintBordersFor(composite_working);
 		composite_working.setLayout(new RowLayout(SWT.VERTICAL));
 		
+		UI_set_tabItem_working_Row1();
+		UI_set_tabItem_working_Row2();
+		UI_set_tabItem_working_Row3();
+		UI_set_tabItem_working_Row4();
+		UI_set_tabItem_working_Row5();
+		UI_set_tabItem_working_Row6();
+		UI_set_tabItem_working_Row7();
+		UI_set_tabItem_working_Row8();
+		UI_set_tabItem_working_Row9();
+	}
+	
+	void UI_set_tabItem_working_Row1()
+	{
 		Row1 = formToolkit.createComposite(composite_working, SWT.BORDER);
 		Row1.setLayout(new RowLayout(SWT.HORIZONTAL));
 		btnCB_Condition1 = new Button(Row1, SWT.CHECK);
@@ -318,7 +350,10 @@ public class Fubon {
 		btnCB_Condition1_1 = new Button(Row1, SWT.CHECK);
 		btnCB_Condition1_1.setFont(SWTResourceManager.getFont("微軟正黑體", 9, SWT.CHECK));
 		btnCB_Condition1_1.setText("過濾剛上市股票)");
-		
+	}
+
+	void UI_set_tabItem_working_Row2()
+	{
 		Row2 = formToolkit.createComposite(composite_working, SWT.BORDER);
 		Row2.setLayout(new RowLayout(SWT.HORIZONTAL));
 		btnCB_Condition2 = new Button(Row2, SWT.CHECK);
@@ -361,7 +396,10 @@ public class Fubon {
 		Label C2_labe2 = new Label(Row2, SWT.NONE);
 		C2_labe2.setFont(SWTResourceManager.getFont("微軟正黑體", 9, SWT.NORMAL));
 		C2_labe2.setText("%");		
-		
+	}
+
+	void UI_set_tabItem_working_Row3()
+	{
 		Row3 = formToolkit.createComposite(composite_working, SWT.BORDER);
 		Row3.setLayout(new RowLayout(SWT.HORIZONTAL));
 		btnCB_Condition3 = new Button(Row3, SWT.CHECK);
@@ -392,6 +430,10 @@ public class Fubon {
 		C3_labe2.setFont(SWTResourceManager.getFont("微軟正黑體",  9, SWT.NONE));
 		C3_labe2.setText("張");
 		
+	}
+
+	void UI_set_tabItem_working_Row4()
+	{
 		Row4 = formToolkit.createComposite(composite_working, SWT.BORDER);	
 		Row4.setLayout(new RowLayout(SWT.HORIZONTAL));
 		
@@ -413,7 +455,10 @@ public class Fubon {
 		Condition.setBackground(SWTResourceManager.getColor(SWT.COLOR_WIDGET_FOREGROUND));
 		Condition.setText("還未設定");
 		
-		
+	}
+
+	void UI_set_tabItem_working_Row5()
+	{
 		Row5 = formToolkit.createComposite(composite_working, SWT.BORDER);	
 		Row5.setLayout(new RowLayout(SWT.HORIZONTAL));
 		
@@ -426,12 +471,12 @@ public class Fubon {
 		Status1.setBackground(SWTResourceManager.getColor(SWT.COLOR_WIDGET_FOREGROUND));
 		Status1.setText(getQuoteServerStatus());
 		Status1.setSize(Status1.getText().length()*10, 15);
-		
+	}
+	
+	void UI_set_tabItem_working_Row6()
+	{
 		Row6 = formToolkit.createComposite(composite_working, SWT.BORDER);	
 		Row6.setLayout(new RowLayout(SWT.HORIZONTAL));
-		
-
-
 
 		Button ConditionSendbutton = new Button(Row6, SWT.NONE);
 		ConditionSendbutton.setText("條件送出");
@@ -542,19 +587,25 @@ public class Fubon {
 		StartDataReading.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				m_DM.setReadingMethod(0);
-				StartReceiving() ;
+				//m_DM.setReadingMethod(0);
+				StartReceiving(0) ;
 			}
 		});
+		
+		formToolkit.adapt(StartDataReading, true, true);
+		StartDataReading.setText("開始接收資料");
 		
 		Button StartDataReadingfromFile = new Button(Row6, SWT.NONE);
 		StartDataReadingfromFile.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				m_DM.setReadingMethod(1);
-				StartReceiving() ;
+				//m_DM.setReadingMethod(1);
+				StartReceiving(1) ;
 			}
 		});
+		
+		formToolkit.adapt(StartDataReadingfromFile, true, true);
+		StartDataReadingfromFile.setText("從檔案接收資料");
 		
 		Button resetBroadCastingServer = new Button(Row6, SWT.NONE);
 		resetBroadCastingServer.addSelectionListener(new SelectionAdapter() {
@@ -564,27 +615,25 @@ public class Fubon {
 			}
 		});
 		
-		
-		formToolkit.adapt(StartDataReading, true, true);
-		StartDataReading.setText("開始接收資料");
-	
-		formToolkit.adapt(StartDataReadingfromFile, true, true);
-		StartDataReadingfromFile.setText("從檔案接收資料");
-		
 		formToolkit.adapt(resetBroadCastingServer, true, true);
 		resetBroadCastingServer.setText("重設推送訊號伺服器");
 		
-/*		Button btnNewButton_1 = new Button(composite_working, SWT.NONE);
-		btnNewButton_1.addSelectionListener(new SelectionAdapter() {
+		Button StartGenerateCloseFile = new Button(Row6, SWT.NONE);
+		StartGenerateCloseFile.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				textMoniter.setText(message);
+				m_DM.m_SM.getFileDB2Memory();  
+				m_DM.StartGenerateCloseFile("C:\\Program Files\\AnyChartStock 1.1.0\\basic-sample\\csv\\");
 			}
 		});
-		formToolkit.adapt(btnNewButton_1, true, true);
-		btnNewButton_1.setText("更新");
-*/		
-		
+
+		formToolkit.adapt(StartGenerateCloseFile, true, true);
+		StartGenerateCloseFile.setText("產生收盤資料檔");
+
+	}
+
+	void UI_set_tabItem_working_Row7()
+	{
 		Row7 = formToolkit.createComposite(composite_working, SWT.BORDER);	
 		Row7.setLayout(new RowLayout(SWT.HORIZONTAL));
 		
@@ -599,6 +648,10 @@ public class Fubon {
 		Status2.setSize(60, 15);
 		//Status2.setBounds((Status2_Label.getText().length()+Status1_Label.getText().length()+Status1.getText().length())*10,3,Status2_Label.getText().length()*10, 15);
 
+	}
+
+	void UI_set_tabItem_working_Row8()
+	{
 		Row8 = formToolkit.createComposite(composite_working, SWT.BORDER);
 		Row8.setLayout(new RowLayout(SWT.HORIZONTAL));
 		textMoniter = new Text(Row8, SWT.BORDER | SWT.READ_ONLY | SWT.V_SCROLL);
@@ -606,6 +659,10 @@ public class Fubon {
 		textMoniter.setSize(new Point(composite_working.getSize().x,15));
 		textMoniter.setText("Test Test Test .......");
 		
+	}
+	
+	void UI_set_tabItem_working_Row9()
+	{
 		Row9 = formToolkit.createComposite(composite_working, SWT.BORDER);
 		Row9.setLayout(new RowLayout(SWT.HORIZONTAL));
 		SignalTable = new Table(Row9, SWT.BORDER | SWT.FULL_SELECTION);
@@ -674,77 +731,14 @@ public class Fubon {
 	    messageColumn.setText("訊息");
 	    messageColumn.setWidth(180);
 	    messageColumn.addListener(SWT.Selection, SortListenerFactory.getListener(SortListenerFactory.STRING_COMPARATOR));
-
-	
-/*
-				 dateColumn = new TableColumn(SignalTable, SWT.CENTER);
-		         dateColumn.setText("Date Column");
-		         dateColumn.setWidth(120);
-		         dateColumn.addListener(SWT.Selection, SortListenerFactory.getListener(SortListenerFactory.DATE_COMPARATOR));
-
-				 intColumn = new TableColumn(SignalTable, SWT.CENTER);
-			     intColumn.setText("Number Column");
-			     intColumn.setWidth(120);
-			     intColumn.addListener(SWT.Selection, SortListenerFactory.getListener(SortListenerFactory.INT_COMPARATOR));
-			        
-			     stringColumn = new TableColumn(SignalTable, SWT.CENTER);
-			     stringColumn.setText("String Column");
-			     stringColumn.setWidth(120);
-			     stringColumn.addListener(SWT.Selection, SortListenerFactory.getListener(SortListenerFactory.STRING_COMPARATOR));
-			        
-			        			        
-			     doubleColumn = new TableColumn(SignalTtable, SWT.CENTER);
-			     doubleColumn.setText("Double Column");
-			     doubleColumn.setWidth(120);
-			     doubleColumn.addListener(SWT.Selection, SortListenerFactory.getListener(SortListenerFactory.DOUBLE_COMPARATOR));
-			        
-			     hourColumn = new TableColumn(SignalTable, SWT.CENTER);
-			     hourColumn.setText("Hour Column");
-			     hourColumn.setWidth(120);
-			     hourColumn.addListener(SWT.Selection, SortListenerFactory.getListener(SortListenerFactory.HOUR_COMPARATOR));
-*/
 		
+	}
+	
+	void UI_set_tabItem_config()
+	{
 		composite_config = formToolkit.createComposite(tabFolder, SWT.NONE);
 		tabItem_config.setControl(composite_config);
 		formToolkit.paintBordersFor(composite_config);
-		
-/*		Label lblNewLabel = new Label(composite_config, SWT.NONE);
-		lblNewLabel.setBounds(10, 21, 83, 16);
-		formToolkit.adapt(lblNewLabel, true, true);
-		lblNewLabel.setText("Remote IP");
-		
-		Label lblRemotePort = new Label(composite_config, SWT.NONE);
-		lblRemotePort.setText("Remote Port");
-		lblRemotePort.setBounds(10, 52, 83, 16);
-		formToolkit.adapt(lblRemotePort, true, true);
-		
-		txtTxtremoteip = new Text(composite_config, SWT.BORDER);
-		txtTxtremoteip.setText("127.0.0.1");
-		txtTxtremoteip.setBounds(94, 15, 100, 22);
-		formToolkit.adapt(txtTxtremoteip, true, true);
-		
-		txtRemotePort = new Text(composite_config, SWT.BORDER);
-		txtRemotePort.setText("777");
-		txtRemotePort.setBounds(94, 46, 100, 22);
-		formToolkit.adapt(txtRemotePort, true, true);
-		
-	
-		Label lblLogFile = new Label(composite_config, SWT.NONE);
-		lblLogFile.setText("Log File");
-		lblLogFile.setBounds(10, 84, 83, 16);
-		formToolkit.adapt(lblLogFile, true, true);
-		
-		lblLogFileLabel = new Label(composite_config, SWT.NONE);
-		lblLogFileLabel.setBounds(110, 84, 300, 16);
-		formToolkit.adapt(lblLogFileLabel, true, true);
-		lblLogFileLabel.setText("");
-		
-		Button btnNewButton = new Button(composite_config, SWT.NONE);
-		btnNewButton.addSelectionListener(new Select());
-		btnNewButton.setBounds(94, 84, 8, 22);
-		formToolkit.adapt(btnNewButton, true, true);
-		btnNewButton.setText("..");
-		*/
 
 		String config_mesg="";
 		Label textConfig = new Label(composite_config, SWT.NONE);
@@ -757,8 +751,10 @@ public class Fubon {
 		config_mesg += "交易所:" + m_DM.m_SM.Exchange +"\n";
 		config_mesg += "開盤時間:" + m_DM.m_SM.strOpenTime +"\n";
 		textConfig.setText(config_mesg);
-		
-		
+	}
+	
+	void UI_set_tabItem_stock()
+	{
 		composite_stock = formToolkit.createComposite(tabFolder, SWT.NONE);
 		tabItem_stock.setControl(composite_stock);
 		formToolkit.paintBordersFor(composite_stock);
@@ -771,34 +767,7 @@ public class Fubon {
 		SymbolText = new Text(composite_stock, SWT.BORDER);
 		SymbolText.setBounds(76, 7, 73, 22);
 		formToolkit.adapt(SymbolText, true, true);
-		
-		
-
-/*				
-				final TableViewer tableViewer = new TableViewer(composite_stock, SWT.BORDER | SWT.FULL_SELECTION);
-				StockTick = tableViewer.getTable();
-				StockTick.setBounds(10, 332, 85, 85);
-				formToolkit.paintBordersFor(StockTick);
-				final TableColumn newColumnTableColumn = new TableColumn(StockTick, SWT.NONE);
-		        newColumnTableColumn.setWidth(10);
-		        newColumnTableColumn.setText("時間");
-
-		        final TableColumn newColumnTableColumn_1 = new TableColumn(StockTick, SWT.NONE);
-		        newColumnTableColumn_1.setWidth(15);
-		        newColumnTableColumn_1.setText("賣價");
-		        
-		        final TableColumn newColumnTableColumn_2 = new TableColumn(StockTick, SWT.NONE);
-		        newColumnTableColumn_2.setWidth(15);
-		        newColumnTableColumn_2.setText("買價");
-
-		        final TableColumn newColumnTableColumn_3 = new TableColumn(StockTick, SWT.NONE);
-		        newColumnTableColumn_3.setWidth(20);
-		        newColumnTableColumn_3.setText("成交");
-
-		        final TableColumn newColumnTableColumn_4 = new TableColumn(StockTick, SWT.NONE);
-		        newColumnTableColumn_4.setWidth(20);
-		        newColumnTableColumn_4.setText("量");
-*/		        
+		   
        		        
         Button BeginQuery = new Button(composite_stock, SWT.NONE);
 		BeginQuery.addSelectionListener(new SelectionAdapter() {
@@ -832,13 +801,10 @@ public class Fubon {
 		formToolkit.adapt(BeginQuery, true, true);
 		BeginQuery.setText("開始查詢");
 		
-		shlZ.addListener (SWT.Resize,  new Listener () {
-			    public void handleEvent (Event e) {
-			    	Resize();
-			    }
-			  });
+		
 		//Resize();
 	}
+	
 	
 /*	void DBTest()
 	{
@@ -981,7 +947,7 @@ public class Fubon {
 	}
 	
 	
-	void StartReceiving() 
+	void StartReceiving(int type) 
 	{
 		if (m_DM.DataManager_Status!=1)
 		{
@@ -989,6 +955,13 @@ public class Fubon {
 			//m_DM=new DataManager();
 			//m_DM.CleanMarket();
 			DataManager_Thread = new Thread(m_DM);
+			//程式啟動後 第一次接收 將DB File update to memory
+			if (!isgetDBfromFile2Memory)
+			{	
+				m_DM.getFileDB2Memoryn();
+				isgetDBfromFile2Memory=true;
+			}
+			m_DM.setReadingMethod(type);
 			DataManager_Thread.start();
 		}
 		if (m_DM.DataManager_Status==1)
@@ -1017,6 +990,7 @@ public class Fubon {
 				m_DM=new DataManager();
 				//m_DM.CleanMarket();
 				DataManager_Thread = new Thread(m_DM);
+				m_DM.setReadingMethod(type);
 				DataManager_Thread.start();
 			}
 		}

@@ -31,7 +31,7 @@ public class FrameParser implements DataSource {
 	StockManager m_SM;
 	
 	String Exchange;		// The config market
-	public String MarketTradingDate=""; 
+	static public String MarketTradingDate=""; 
 	/* =======The field in ticker==================================== */
 	
 	static Stock tStock;
@@ -92,9 +92,12 @@ public class FrameParser implements DataSource {
 		/* 檢查是否為剛開盤 */
 		if ((TradingDate!=null)&&(TradingDate.length()!=0))
 		{
-			if (!DateConvertor.thesameTradingDate(TradingDate, MarketTradingDate))
+			if ((MarketTradingDate!=null)&&(MarketTradingDate.length()!=0))
 			{
-				return true;
+				if (!DateConvertor.thesameTradingDate(TradingDate, MarketTradingDate))
+				{
+					return true;
+				}
 			}
 		}
 		return false;
